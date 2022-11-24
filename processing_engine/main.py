@@ -42,7 +42,7 @@ def cleaning_data(covid_data: DataFrame, tobe_dropped: List[str]) -> DataFrame:
         Args
             covid_data(DataFrame): raw input data as DataFrame
         Returns 
-            (DataFrame): cleaned DataFrame  
+            (DataFrame): cleaned covid_data as Dataframe 
     '''
     #dropping column as "Province/State" contains too many missing values
     covid_data.drop(tobe_dropped, 1, inplace=True)
@@ -61,6 +61,7 @@ def extract_data(covid_data: DataFrame, start_date: str, end_date: str) -> DataF
         Returns 
             (DataFrame): extracted data 
     '''
+    #to be done -we should check whether the start date is less than end data
     mask = (covid_data["ObservationDate"] > start_date) & (covid_data["ObservationDate"] <= end_date)
     covid_data = covid_data.loc[mask]
     
@@ -128,4 +129,9 @@ if __name__ == '__main__':
     csv_data = read_from_csv(file_path=path)
 
     drop_list = ["Province/State","SNo"]
-    cleaning_data(covid_data=csv_data, tobe_dropped=drop_list)
+    cleaned_data = cleaning_data(covid_data=csv_data, tobe_dropped=drop_list)
+
+    start_date = '2020-01-21'
+    end_date = '2020-04-30'
+    extracted_data = extract_data(covid_data = cleaned_data,start_date= start_date, end_date= end_date)
+    
