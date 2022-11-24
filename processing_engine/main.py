@@ -2,12 +2,14 @@
 import warnings
 warnings.filterwarnings('ignore')
 
+import sys
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import datetime as dt
 import seaborn as sns
 import geopandas as gpd
+from os.path import exists
 from pandas.core.frame import DataFrame
 from datetime import timedelta
 from sklearn.svm import SVR
@@ -95,3 +97,35 @@ def print_global_covid_status(covid_data: DataFrame):
     print("Total number of Death cases around the world", get_death_count(covid_data))
     print("Total number of Active cases around the world", get_active_cases_count(covid_data))
     print("Total number of Closed cases around the world", get_closed_cases_count(covid_data))
+
+
+if __name__ == '__main__':
+
+    '''
+    program name: data_salary.py
+
+    program accepts command line arguments as inputs
+
+    sys.argv is an array containing all the input arguments. The first argument is the program name itself 
+    '''
+    if len (sys.argv) < 2:
+        print ("Usage: python3 main.py <input csv filename>  ")
+        sys.exit (1)
+
+    '''
+    Accept file name as a Command-Line Argument
+    '''
+    path = str(sys.argv[1])
+    # print(file_path)
+    print(sys.argv)
+    '''
+    Checking if the file exist. None existense of file will fail the program with exit code 1
+    '''
+    if not exists(path):
+        print('file not found')
+        exit(1)
+
+    csv_data = read_from_csv(file_path=path)
+
+    drop_list = ["Province/State","SNo"]
+    cleaning_data(covid_data=csv_data, tobe_dropped=drop_list)
