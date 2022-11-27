@@ -26,7 +26,7 @@ from geopy.geocoders import Nominatim
 from typing import List
 from sklearn import metrics #Import scikit-learn metrics module for accuracy calculation
 from reader import read_from_csv, group_by_date, extract_data, clean_data
-from visualisation import bar_plot, line_graph
+from visualisation import bar_plot, line_graph, bar_plots, top20_countrywise, uk_plot 
 
   
 
@@ -146,6 +146,24 @@ def report_weekly_data(covid_data: DataFrame):
     ]
     line_graph(week_num, data)
 
+#def uk_covid_data(uk_data, datewise_uk):
+    '''
+    Function for printing basic information in the covid dataset
+        Args
+            covid_data(DataFrame): extracted input data
+        Returns 
+            None
+    '''
+    data = uk_data
+    datewise_data = datewise_uk
+    print(datewise_uk.iloc[-1])
+    print("Total Active Cases", total_active_cases)
+    print("Total Closed Cases", total_closed_cases)
+    print("Average increase in number of Confirmed Cases every day: ", mean_confirmed_cases)
+    print("Average increase in number of Recovered Cases every day: ", mean_recovered_cases)
+    print("Average increase in number of Deaths Cases every day: ", mean_death_count)    
+    
+
 def parse_cmd_args():
     # Create the parser and add arguments
     parser = argparse.ArgumentParser()
@@ -208,11 +226,40 @@ if __name__ == '__main__':
         title=closedcases_plot_title,
         rotation=90)
 
-    report_weekly_data(covid_data=datewise)    
+    report_weekly_data(covid_data=datewise)  
 
+    # Distribution plot weekwise
+    x = week_num
+    y1 = pd.Series(weekwise_confirmed).diff().fillna(0)
+    y2 = pd.Series(weekwise_recovered).diff().fillna(0)
+    x_label = "Week Number"
+    y_label1 = "Number of Confirmed cases"
+    y_label2 = "Number of Recovered cases"
+    subplot_title1 = "Weekly increase in number of confirmed case"
+    subplot_title2 = "weekly increase in number of Death cases"
 
+    # countrywise analysis
+    countrywise_x1_axis = top_20confirmed["Confirmed"]
+    countrywise_y1_axis = top_20confirmed.index
+    Countrywise_title1 = "Top 20 countries as per number of confirmed cases"
+    ountrywise_x2_axis= top_20deaths["Deaths"]
+    ountrywise_y2_axis= top_20confirmed.index
+    Countrywise_title2 = "Top 20 countries as per number of death cases"
 
+    # uk analysis
+    uk_data = covid_data[covid_data["Country"]=="UK"]
+    datewise_uk = uk_data.groupby(["ObservationDate"]).agg({"Confirmed":"sum","Recovered":"sum","Deaths":"sum"})
+    total_active_cases = datewise_uk["Confirmed"].iloc[-1]- datewise_uk["Recovered"].iloc[-1] - datewise_uk["Deaths"].iloc[-1]
+    total_closed_cases = datewise_uk["Recovered"].iloc[-1] + datewise_uk["Deaths"].iloc[-1]
+    mean_confirmed_cases = np.round(datewise_uk["Confirmed"].diff().fillna(0).mean())
+    mean_recovered_cases = np.round(datewise_uk["Recovered"].diff().fillna(0).mean())
+    mean_death_count = np.round(datewise_uk["Deaths"].diff().fillna(0).mean())
 
-
+    x = datewise_uk["Confirmed"].diff().fillna(0)
+    y = datewise_uk["Recovered"].diff().fillna(0)
+    z = datewise_uk["Deaths"].diff().fillna(0)
+    x_label = "Timestamp"
+    y_label = "Daily increase"
+    uk_title = "Dialy increase in uk"
 
 
