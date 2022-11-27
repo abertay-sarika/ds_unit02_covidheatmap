@@ -151,8 +151,8 @@ def report_weekly_data(covid_data: DataFrame):
     return (weekly_data, week_num)
 
 
-def top_n_country(n: int, covid_data: DataFrame):
-     '''
+def top_n_country(n: int, reports_dir, covid_data: DataFrame):
+    '''
     Function for plotting line graph
         Arg
             x,y(position) : label
@@ -161,9 +161,28 @@ def top_n_country(n: int, covid_data: DataFrame):
             xticks(sequence) : positioning of values ?
         Returns 
              distribution plot(line) : visualized data
+def bar_plot_weekwise(file_name, x, y1, y2, subplot_title1, subplot_title2, figsize, x_label=None, y_label1=None, y_label2=None):
     '''
     countrywise = covid_data[covid_data["ObservationDate"]==covid_data["ObservationDate"].max()].groupby(["Country"]).agg({"Confirmed":"sum","Recovered":"sum","Deaths":"sum"}).sort_values(["Confirmed"],ascending=False)
-  
+    figsize = (25,10)
+   
+    top_20confirmed = countrywise.sort_values(["Confirmed"],ascending=False).head(20)
+    top_20deaths = countrywise.sort_values(["Deaths"],ascending=False).head(20)
+    x1 = top_20confirmed["Confirmed"]
+    y = top_20confirmed.index
+    subplot_title1= "Top 20 countries as per number of confirmed cases"
+    x2=top_20deaths["Deaths"]
+    subplot_title2="Top 20 countries as per number of death cases"
+    bar_plot_weekwise(
+        reports_dir + "/plot5",
+        subplot_title1, 
+        subplot_title2,
+        (25,10),
+        x1,
+        x2,
+        y, 
+        y)
+    
 
 # def uk_covid_data(uk_data, datewise_uk):
 #     '''
@@ -265,17 +284,18 @@ if __name__ == '__main__':
     subplot_title2 = "weekly increase in number of Death cases"
     bar_plot_weekwise(
         reports_dir + "/plot4",
+        subplot_title1, 
+        subplot_title2,
+        (12,4),
+        x,
         x,
         y1, 
         y2, 
         x_label, 
         y_label1, 
-        y_label2, 
-        subplot_title1, 
-        subplot_title2)
-    obs_date_max = extracted_data["ObservationDate"].max()
-
-    top_n_country(10, extracted_data, obs_date_max)    
+        y_label2)
+        
+    top_n_country(10, reports_dir, extracted_data)    
 
     # # countrywise analysis
     # countrywise_x1_axis = top_20confirmed["Confirmed"]

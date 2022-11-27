@@ -39,7 +39,7 @@ def line_graph(file_name, week_num, data):
     plt.legend()
     plt.savefig(file_name)
 
-def bar_plot_weekwise(file_name, x, y1, y2, x_label, y_label1, y_label2, subplot_title1, subplot_title2):
+def bar_plot_weekwise(file_name, subplot_title1, subplot_title2, figsize, x1=None, x2=None, y1=None, y2=None, x_label=None, y_label1=None, y_label2=None):
     '''
     Function for plotting two bar plots
         Arg
@@ -49,13 +49,16 @@ def bar_plot_weekwise(file_name, x, y1, y2, x_label, y_label1, y_label2, subplot
         Returns 
             distribution plot(bar) : visualized data
     '''
-    _fig, (ax1,ax2) = plt.subplots(1,2,figsize=(12,4))
-    sns.barplot(x=x,y=y1,ax=ax1)
-    sns.barplot(x=x,y=y2,ax=ax2)
-    ax1.set_xlabel(x_label)
-    ax2.set_xlabel(x_label)
-    ax1.set_ylabel(y_label1)
-    ax2.set_ylabel(y_label2)
+    _fig, (ax1,ax2) = plt.subplots(1,2,figsize=figsize)
+    sns.barplot(x=x1,y=y1,ax=ax1)
+    sns.barplot(x=x2,y=y2,ax=ax2)
+    if x_label is not None: 
+        ax1.set_xlabel(x_label)
+        ax2.set_xlabel(x_label)
+    if y_label1 is not None:    
+        ax1.set_ylabel(y_label1)
+    if y_label2 is not None:    
+        ax2.set_ylabel(y_label2)
     ax1.set_title(subplot_title1)
     ax2.set_title(subplot_title2)
     plt.savefig(file_name)
