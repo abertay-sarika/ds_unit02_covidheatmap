@@ -24,8 +24,6 @@ def clean_data(covid_data: DataFrame, tobe_dropped: List[str]) -> DataFrame:
     covid_data.drop(tobe_dropped, 1, inplace=True)
     covid_data["ObservationDate"] = pd.to_datetime(covid_data["ObservationDate"]) #coverting "ObservationDate" in to Datetime format
     covid_data.rename(columns={"Country/Region":"Country"}, inplace=True)
-    covid_data.__setitem__("longitude", 0.0)
-    covid_data.__setitem__("latitude", 0.0)
     return covid_data
    
 def extract_data(covid_data: DataFrame, start_date: str, end_date: str) -> DataFrame:

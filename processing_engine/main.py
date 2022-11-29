@@ -9,29 +9,19 @@ import numpy as np
 import datetime as dt
 import matplotlib.pyplot as plt
 import seaborn as sns
-import geopandas as gpd
 import plotly.express as px
 import plotly.graph_objects as go
+import pycountry
 from os.path import exists
 from pandas.core.frame import DataFrame
-from datetime import timedelta
-from sklearn.svm import SVR
-#from sklearn.model_selection import train_test_split # Import train_test_split function
-#from sklearn.preprocessing import StandardScaler
-#from sklearn.cluster import KMeans
-from sklearn.metrics import mean_squared_error
-from sklearn import metrics
-from sklearn.metrics import accuracy_score
-from geopy.geocoders import Nominatim
 from typing import List
-from sklearn import metrics #Import scikit-learn metrics module for accuracy calculation
 from preprocess_data import csv_reader, group_by_date, extract_data, clean_data
-from visualisation import bar_plot, line_graph, bar_plot_weekwise
+from visualisation import bar_plot, line_graph, bar_plot_weekwise, plot_global_heatmap
+from prediction import decision_tree, svm
 import reporting
 
-  
 
-def confirmed_cases_count(covid_data: DataFrame, r: reporting.Output):
+def confirmed_cases_count(covid_data: DataFrame) -> float:
     '''
     Function for getting count of Confirmed covid cases globally by extracted_data
         Args
@@ -39,9 +29,9 @@ def confirmed_cases_count(covid_data: DataFrame, r: reporting.Output):
         Returns 
             (float): count of confirmed covid cases  
     '''
-    r.set_confirmed_cases(covid_data["Confirmed"].iloc[-1])
+    return covid_data["Confirmed"].iloc[-1]
 
-def recovered_cases_count(covid_data: DataFrame, r: reporting.Output):
+def recovered_cases_count(covid_data: DataFrame) -> float:
     '''
     Function for getting count of Recovered covid cases globally by extracted_data
         Args
@@ -49,9 +39,9 @@ def recovered_cases_count(covid_data: DataFrame, r: reporting.Output):
         Returns 
             (float): count of Recovered covid cases 
     '''
-    r.set_recovered_cases(covid_data["Recovered"].iloc[-1])
+    return covid_data["Recovered"].iloc[-1]
 
-def death_count(covid_data: DataFrame, r: reporting.Output):
+def death_count(covid_data: DataFrame) -> float:
     '''
     Function for getting count of covid deaths globally by extracted_data
         Args
@@ -59,9 +49,9 @@ def death_count(covid_data: DataFrame, r: reporting.Output):
         Returns 
             (float): count of covid deaths
     '''
-    r.set_death_count(covid_data["Deaths"].iloc[-1])
+    return covid_data["Deaths"].iloc[-1]
 
-def active_cases_count(covid_data: DataFrame, r: reporting.Output):
+def active_cases_count(covid_data: DataFrame) -> float:
     '''
     Function for getting count of active cases globally by extracted_data
         Args
@@ -69,11 +59,9 @@ def active_cases_count(covid_data: DataFrame, r: reporting.Output):
         Returns 
             (float): count of active cases 
     '''
-    r.set_active_cases(covid_data["Confirmed"].iloc[-1] 
-        - covid_data["Recovered"].iloc[-1]
-        - covid_data["Deaths"].iloc[-1])
+    return covid_data["Confirmed"].iloc[-1] - covid_data["Recovered"].iloc[-1] - covid_data["Deaths"].iloc[-1]
 
-def closed_cases_count(covid_data: DataFrame, r: reporting.Output):
+def closed_cases_count(covid_data: DataFrame) -> float:
     '''
     Function for getting count of closed cases globally by extracted_data
         Args
@@ -81,7 +69,7 @@ def closed_cases_count(covid_data: DataFrame, r: reporting.Output):
         Returns 
             (float): count of closed cases
     '''
-    r.set_closed_cases(covid_data["Recovered"].iloc[-1] + covid_data["Deaths"].iloc[-1])
+    return (covid_data["Recovered"].iloc[-1] + covid_data["Deaths"].iloc[-1])
 
 def data_sanity_check_output(covid_data: DataFrame):
     '''
@@ -95,7 +83,7 @@ def data_sanity_check_output(covid_data: DataFrame):
     print("checking for null values:\n", covid_data.isnull().sum())
     print("checking Data-type of each column:\n", covid_data.dtypes)
 
-def global_covid_status(r: reporting.Output):
+def global_covid_status(covid_data: DataFrame):
     '''
     Function for printing basic information in the covid dataset
         Args
@@ -103,14 +91,16 @@ def global_covid_status(r: reporting.Output):
         Returns 
             None
     '''
-    print("---Basic Information---")
-    #print("First five raws as sample", covid_data.head(5))
-    #print("Total number of countries with Disease Spread:", len(covid_data["Country"].unique()))
-    print("Total number of Confirmed cases around the world", r.confirmed_cases)
-    print("Total number of Recovered cases around the world", r.recovered_cases)
-    print("Total number of Covid Death around the world", r.death_count)
-    print("Total number of Active cases around the world", r.active_cases)
-    print("Total number of Closed cases around the world", r.closed_cases)
+    print("---Basic Information---\n")
+    print("First five raws as sample\n", covid_data.head(5))
+    print("-------------------------------------------\n")
+    print("Total number of countries with Disease Spread:", len(covid_data["Country"].unique()))
+    print("Total number of Confirmed cases around the world", confirmed_cases_count(covid_data))
+    print("Total number of Recovered cases around the world", recovered_cases_count(covid_data))
+    print("Total number of Covid Death around the world", death_count(covid_data))
+    print("Total number of Active cases around the world", active_cases_count(covid_data))
+    print("Total number of Closed cases around the world", closed_cases_count(covid_data))
+    print("-------------------------------------------\n")
 
 
 def report_weekly_data(covid_data: DataFrame):
@@ -145,7 +135,7 @@ def report_weekly_data(covid_data: DataFrame):
         },
         "weekwise_deaths": {
             'val' : weekwise_deaths,
-            'label' : str("weekly growth of death case")
+            'label' : str("weekly growth of  covid deaths")
         }
     }
     return (weekly_data, week_num)
@@ -155,10 +145,7 @@ def top_n_country(n: int, reports_dir, covid_data: DataFrame):
     '''
     Function for plotting line graph
         Arg
-            x,y(position) : label
-            figsize(tuple) : width and height of the graph
-            title(str) : title for bar charts
-            xticks(sequence) : positioning of values ?
+            
         Returns 
              distribution plot(line) : visualized data
 def bar_plot_weekwise(file_name, x, y1, y2, subplot_title1, subplot_title2, figsize, x_label=None, y_label1=None, y_label2=None):
@@ -172,7 +159,7 @@ def bar_plot_weekwise(file_name, x, y1, y2, subplot_title1, subplot_title2, figs
     y = top_20confirmed.index
     subplot_title1= "Top 20 countries as per number of confirmed cases"
     x2=top_20deaths["Deaths"]
-    subplot_title2="Top 20 countries as per number of death cases"
+    subplot_title2="Top 20 countries as per number of covid deaths"
     bar_plot_weekwise(
         reports_dir + "/plot5",
         subplot_title1, 
@@ -182,25 +169,25 @@ def bar_plot_weekwise(file_name, x, y1, y2, subplot_title1, subplot_title2, figs
         x2,
         y, 
         y)
-    
 
-# def uk_covid_data(uk_data, datewise_uk):
-#     '''
-#     Function for printing basic information in the covid dataset
-#         Args
-#             covid_data(DataFrame): extracted input data
-#         Returns 
-#             None
-#     '''
-#     data = uk_data
-#     datewise_data = datewise_uk
-#     print(datewise_uk.iloc[-1])
-#     print("Total Active Cases", total_active_cases)
-#     print("Total Closed Cases", total_closed_cases)
-#     print("Average increase in number of Confirmed Cases every day: ", mean_confirmed_cases)
-#     print("Average increase in number of Recovered Cases every day: ", mean_recovered_cases)
-#     print("Average increase in number of Deaths Cases every day: ", mean_death_count)    
-    
+def generate_heatmap(covid_data: DataFrame):
+    list_countries = covid_data['Country'].unique().tolist()
+    d_country_code = {}  
+    for country in list_countries:
+        try:
+            country_data = pycountry.countries.search_fuzzy(country)
+            country_code = country_data[0].alpha_3
+            d_country_code.update({country: country_code})
+        except:
+            # print('could not add ISO 3 code for ->', country)
+            d_country_code.update({country: ' '})
+
+    for k, v in d_country_code.items():
+        covid_data.loc[(covid_data.Country == k), 'iso_alpha'] = v
+
+    title = 'Global heatmap'
+    file_name = reports_dir + "/heatmap.html"
+    plot_global_heatmap(file_name, covid_data, title)
 
 def parse_cmd_args():
     # Create the parser and add arguments
@@ -231,9 +218,6 @@ if __name__ == '__main__':
         print('file not found')
         exit(1)
 
-    # initialising the 'reporting' object
-    # this object stores important variable values will be used for final o/p display
-    output = reporting.Output()
     reports_dir = reporting.create_reports_dir()
 
     csv_data = csv_reader(file_path=path)
@@ -245,7 +229,7 @@ if __name__ == '__main__':
     datewise = group_by_date(covid_data=extracted_data)
     #print(extracted_data.head(5))
 
-    global_covid_status(r = output)
+    global_covid_status(covid_data=extracted_data)
     data_sanity_check_output(covid_data=extracted_data)
     
     # Distribution plot for Active cases
@@ -281,7 +265,7 @@ if __name__ == '__main__':
     y_label1 = "Number of Confirmed cases"
     y_label2 = "Number of Recovered cases"
     subplot_title1 = "Weekly increase in number of confirmed case"
-    subplot_title2 = "weekly increase in number of Death cases"
+    subplot_title2 = "weekly increase in number of Covid Deaths"
     bar_plot_weekwise(
         reports_dir + "/plot4",
         subplot_title1, 
@@ -297,28 +281,13 @@ if __name__ == '__main__':
         
     top_n_country(10, reports_dir, extracted_data)    
 
-    # # countrywise analysis
-    # countrywise_x1_axis = top_20confirmed["Confirmed"]
-    # countrywise_y1_axis = top_20confirmed.index
-    # Countrywise_title1 = "Top 20 countries as per number of confirmed cases"
-    # ountrywise_x2_axis= top_20deaths["Deaths"]
-    # ountrywise_y2_axis= top_20confirmed.index
-    # Countrywise_title2 = "Top 20 countries as per number of death cases"
+    #heatmap
+    heatmap_data = csv_reader(file_path=path)
+    heatmap_data.rename(columns={"Country/Region":"Country"}, inplace=True)
+    generate_heatmap(covid_data=heatmap_data)
 
-    # # uk analysis
-    # uk_data = covid_data[covid_data["Country"]=="UK"]
-    # datewise_uk = uk_data.groupby(["ObservationDate"]).agg({"Confirmed":"sum","Recovered":"sum","Deaths":"sum"})
-    # total_active_cases = datewise_uk["Confirmed"].iloc[-1]- datewise_uk["Recovered"].iloc[-1] - datewise_uk["Deaths"].iloc[-1]
-    # total_closed_cases = datewise_uk["Recovered"].iloc[-1] + datewise_uk["Deaths"].iloc[-1]
-    # mean_confirmed_cases = np.round(datewise_uk["Confirmed"].diff().fillna(0).mean())
-    # mean_recovered_cases = np.round(datewise_uk["Recovered"].diff().fillna(0).mean())
-    # mean_death_count = np.round(datewise_uk["Deaths"].diff().fillna(0).mean())
+    #prediction
+    decision_tree(datewise)
+    svm(datewise)
 
-    # x = datewise_uk["Confirmed"].diff().fillna(0)
-    # y = datewise_uk["Recovered"].diff().fillna(0)
-    # z = datewise_uk["Deaths"].diff().fillna(0)
-    # x_label = "Timestamp"
-    # y_label = "Daily increase"
-    # uk_title = "Dialy increase in uk"
-
-
+   

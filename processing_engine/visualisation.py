@@ -1,6 +1,10 @@
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import plotly.express as px
+from pandas.core.frame import DataFrame
+import plotly.io as pio
+from plotly.io import write_html
+    
 def bar_plot(file_name, x, y,figsize, title, rotation):
     '''
     Function for plotting barchart
@@ -22,10 +26,7 @@ def line_graph(file_name, week_num, data):
     '''
     Function for plotting line graph
         Arg
-            wwek_num(int) : week number
-            weekwise_confirmed() : weekly confirmed cases count
-            weekwise_recovered() : weekly recovered cases count
-            weekwise_deaths() : weekly deaths count
+            covida_data
         Returns
              distribution plot(line) : visualized data
     '''
@@ -63,40 +64,20 @@ def bar_plot_weekwise(file_name, subplot_title1, subplot_title2, figsize, x1=Non
     ax2.set_title(subplot_title2)
     plt.savefig(file_name)
 
-# def top20_countrywise(covid_data, countrywise_x1_axis,countrywise_y1_axis, Countrywise_title1, countrywise_x2_axis, countrywise_y2_axis, Countrywise_title2):
-#      '''
-#     Function for plotting line graph
-#         Arg
-            
-#         Returns 
-#              distribution plot(line) : visualized data
-#     '''
-#     countrywise = covid_data[covid_data["ObservationDate"]==covid_data["ObservationDate"].max()].groupby(["Country"]).agg(
-#         {"Confirmed":"sum","Recovered":"sum","Deaths":"sum"}).sort_values(["Confirmed"],ascending=False)
-#     fig,(ax1,ax2)=plt.subplots(1,2,figsize=(25,10))
-#     top_20confirmed = countrywise.sort_values(["Confirmed"],ascending=False).head(20)
-#     top_20deaths = countrywise.sort_values(["Deaths"],ascending=False).head(20)
-#     sns.barplot(x=countrywise_x1_axis,y=countrywise_y1_axis,ax=ax1)
-#     ax1.set_title(Countrywise_title1)
-#     sns.barplot(x=countrywise_x2_axis,y=countrywise_y2_axis,ax=ax2)
-#     ax2.set_title(Countrywise_title2) 
-#     plt.show()
-
-# #def uk_plot(x, y, z, x_label, y_label, uk_title):
-#     '''
-#     Function for plotting line graph
-#         Arg
-            
-#         Returns 
-#              distribution plot(line) : visualized data
-#     '''
-#     plt.plot(x,label="Daily increase in confirmed cases")
-#     plt.plot(y,label="Daily increase in recovered cases")
-#     plt.z,label="Daily increase in deaths"
-#     plt.xlabel(x_label)
-#     plt.ylabel(y_label)
-#     plt.title(uk_title)
-#     plt.xticks(rotation = 90)
-#     plt.legend()
-
+def plot_global_heatmap(file_name, covid_data, title):
+    '''
+    Function for generating heatmap
+        Arg
+           
+        Returns 
+            distribution plot(bar) : visualized data
+    ''' 
+    fig = px.choropleth(data_frame = covid_data,
+                    locations= "iso_alpha",
+                    color= "Confirmed",  # value in column 'Confirmed' determines color
+                    hover_name= "Country",
+                    color_continuous_scale= 'RdYlGn',  #  color scale red, yellow green
+                    animation_frame= "ObservationDate")
+    fig.update_layout(title_text = title)
+    write_html(fig, file_name)
 
